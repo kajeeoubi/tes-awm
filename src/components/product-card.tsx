@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Minus, Plus, ShoppingBag } from 'lucide-react';
 import { Product } from '@/types/ecommerce';
 import { useCart } from '@/context/cart-context';
@@ -42,46 +43,48 @@ export function ProductCard({ product, badgeText }: ProductCardProps) {
 
   return (
     <div className="group flex flex-col justify-between transition-all duration-300">
-      {/* Light Grey Image Backdrop */}
-      <div className="relative aspect-4/5 w-full overflow-hidden rounded-xl bg-[#f4f4f4] dark:bg-muted/40 p-3 sm:p-4 flex items-center justify-center">
-        {product.image_url ? (
-          <div className="relative h-full w-full">
-            <Image
-              src={product.image_url}
-              alt={product.name}
-              fill
-              sizes="(max-width: 768px) 50vw, 25vw"
-              className="object-contain p-1.5 sm:p-2 mix-blend-multiply dark:mix-blend-normal transition-transform duration-500 group-hover:scale-105"
-            />
-          </div>
-        ) : (
-          <div className="text-xs text-muted-foreground">Foto Produk</div>
-        )}
-
-        {/* Top Left Minimalist Outline Pill Tag */}
-        <div className="absolute left-2.5 top-2.5 sm:left-3 sm:top-3">
-          <span className="inline-block rounded-full border border-neutral-300/80 bg-white/95 px-2 py-0.5 text-[8.5px] sm:text-[9px] font-bold tracking-wider text-neutral-800 uppercase">
-            {displayBadge}
-          </span>
-        </div>
-      </div>
-
-      {/* Product Information */}
-      <div className="pt-2.5 pb-1">
-        <h4 className="text-xs font-semibold text-foreground line-clamp-1 group-hover:underline underline-offset-2 transition-all">
-          {product.name}
-        </h4>
-        <div className="mt-0.5 flex items-center justify-between text-xs">
-          <span className="font-bold text-foreground text-[11px] sm:text-xs">
-            {formatRupiah(product.price)}
-          </span>
-          {currentInCart > 0 && (
-            <span className="text-[9px] sm:text-[10px] font-medium text-emerald-600">
-              {currentInCart} di keranjang
-            </span>
+      <Link href={`/products/${product.id}`} className="block group/item focus:outline-none">
+        {/* Light Grey Image Backdrop */}
+        <div className="relative aspect-4/5 w-full overflow-hidden rounded-xl bg-[#f4f4f4] dark:bg-muted/40 p-3 sm:p-4 flex items-center justify-center cursor-pointer">
+          {product.image_url ? (
+            <div className="relative h-full w-full">
+              <Image
+                src={product.image_url}
+                alt={product.name}
+                fill
+                sizes="(max-width: 768px) 50vw, 25vw"
+                className="object-contain p-1.5 sm:p-2 mix-blend-multiply dark:mix-blend-normal transition-transform duration-500 group-hover/item:scale-105"
+              />
+            </div>
+          ) : (
+            <div className="text-xs text-muted-foreground">Foto Produk</div>
           )}
+
+          {/* Top Left Minimalist Outline Pill Tag */}
+          <div className="absolute left-2.5 top-2.5 sm:left-3 sm:top-3">
+            <span className="inline-block rounded-full border border-neutral-300/80 bg-white/95 px-2 py-0.5 text-[8.5px] sm:text-[9px] font-bold tracking-wider text-neutral-800 uppercase shadow-xs">
+              {displayBadge}
+            </span>
+          </div>
         </div>
-      </div>
+
+        {/* Product Information */}
+        <div className="pt-2.5 pb-1">
+          <h4 className="text-xs font-semibold text-foreground line-clamp-1 group-hover/item:underline underline-offset-2 transition-all">
+            {product.name}
+          </h4>
+          <div className="mt-0.5 flex items-center justify-between text-xs">
+            <span className="font-bold text-foreground text-[11px] sm:text-xs">
+              {formatRupiah(product.price)}
+            </span>
+            {currentInCart > 0 && (
+              <span className="text-[9px] sm:text-[10px] font-medium text-emerald-600">
+                {currentInCart} di keranjang
+              </span>
+            )}
+          </div>
+        </div>
+      </Link>
 
       {/* Responsive Controls */}
       <div className="pt-1.5 flex flex-col gap-1.5">

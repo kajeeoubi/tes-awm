@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { ShoppingBag } from 'lucide-react';
 import { useCart } from '@/context/cart-context';
 
@@ -13,10 +14,14 @@ const NAV_ITEMS = [
 ];
 
 export function Navbar() {
+  const pathname = usePathname();
+  const isHomePage = pathname === '/';
   const { totalItems, setIsCartOpen } = useCart();
   const [activeSection, setActiveSection] = useState<string>('');
 
   useEffect(() => {
+    if (!isHomePage) return;
+
     const handleScroll = () => {
       const scrollPosition = window.scrollY + 140;
 
@@ -38,7 +43,7 @@ export function Navbar() {
     handleScroll();
 
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [isHomePage]);
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-white/95 backdrop-blur-md dark:bg-background/95 transition-all">
@@ -56,11 +61,13 @@ export function Navbar() {
         {/* Center Nav Links with Scroll Spy Highlight (Desktop) */}
         <nav className="hidden lg:flex items-center gap-8 text-xs tracking-normal">
           {NAV_ITEMS.map((item) => {
-            const isActive = activeSection === item.id;
+            const isActive = isHomePage && activeSection === item.id;
+            const targetHref = isHomePage ? item.href : `/${item.href}`;
+
             return (
-              <a
+              <Link
                 key={item.id}
-                href={item.href}
+                href={targetHref}
                 className={`py-1 transition-colors ${
                   isActive
                     ? 'text-foreground font-bold'
@@ -68,7 +75,7 @@ export function Navbar() {
                 }`}
               >
                 {item.label}
-              </a>
+              </Link>
             );
           })}
         </nav>
