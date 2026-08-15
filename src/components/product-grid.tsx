@@ -17,8 +17,20 @@ export function ProductGrid({ initialProducts }: ProductGridProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  // Listen for category selection events dispatched from other sections
+  // Listen for category selection events and URL search parameters
   useEffect(() => {
+    const checkUrlCategory = () => {
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const catParam = urlParams.get('category');
+        if (catParam) {
+          setSelectedCategory(catParam);
+        }
+      }
+    };
+
+    checkUrlCategory();
+
     const handleCategoryEvent = (e: Event) => {
       const customEvent = e as CustomEvent<{ category: string }>;
       if (customEvent.detail && customEvent.detail.category) {
@@ -27,8 +39,10 @@ export function ProductGrid({ initialProducts }: ProductGridProps) {
     };
 
     window.addEventListener('sparke:select-category', handleCategoryEvent);
+    window.addEventListener('popstate', checkUrlCategory);
     return () => {
       window.removeEventListener('sparke:select-category', handleCategoryEvent);
+      window.removeEventListener('popstate', checkUrlCategory);
     };
   }, []);
 

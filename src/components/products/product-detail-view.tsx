@@ -74,8 +74,8 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
           <>
             <ChevronRight className="h-3 w-3 text-neutral-300 shrink-0" />
             <Link
-              href={`/#catalog`}
-              className="hover:text-foreground transition-colors shrink-0"
+              href={`/?category=${encodeURIComponent(product.category)}#catalog`}
+              className="hover:text-foreground transition-colors shrink-0 font-medium"
             >
               {product.category}
             </Link>
@@ -105,11 +105,14 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
               <div className="text-sm text-neutral-400 font-medium">Foto Produk Tidak Tersedia</div>
             )}
 
-            {/* Badges on Top Left & Right */}
+            {/* Category Badge on Top Left */}
             <div className="absolute left-4 top-4 flex items-center gap-2">
-              <span className="rounded-full bg-white/95 backdrop-blur-xs border border-neutral-200/80 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-neutral-900 shadow-xs">
+              <Link
+                href={`/?category=${encodeURIComponent(product.category || 'Aksesori')}#catalog`}
+                className="rounded-full bg-white/95 backdrop-blur-xs border border-neutral-200/80 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-neutral-900 shadow-xs hover:bg-neutral-900 hover:text-white transition-colors cursor-pointer"
+              >
                 {product.category || 'Elektronik'}
-              </span>
+              </Link>
             </div>
 
             <div className="absolute right-4 top-4">
@@ -164,9 +167,12 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
         {/* Right Column: Details, Price, and Purchase Actions */}
         <div className="lg:col-span-5 space-y-6 lg:pl-2">
           <div className="space-y-2 border-b border-neutral-200/80 pb-6">
-            <span className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+            <Link
+              href={`/?category=${encodeURIComponent(product.category || 'Aksesori')}#catalog`}
+              className="text-xs font-semibold uppercase tracking-wider text-neutral-500 hover:text-foreground hover:underline transition-colors inline-block cursor-pointer"
+            >
               {product.category || 'Elektronik & Aksesori'}
-            </span>
+            </Link>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground leading-snug">
               {product.name}
             </h1>
