@@ -71,7 +71,7 @@ export default function OrderSuccessPage() {
         </div>
         <h2 className="text-lg font-bold text-foreground">Pesanan Tidak Ditemukan</h2>
         <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-          Nomor pesanan #{orderNumber} tidak ditemukan di sistem.
+          Nomor pesanan {orderNumber} tidak ditemukan di sistem.
         </p>
         <Link href="/" className="mt-6">
           <Button className="rounded-full text-xs font-semibold px-6">Kembali ke Beranda</Button>
@@ -126,9 +126,9 @@ export default function OrderSuccessPage() {
 
               <div className="space-y-1">
                 <span className="text-muted-foreground flex items-center gap-1.5 font-medium">
-                  <Phone className="h-3.5 w-3.5" /> Nomor WhatsApp / HP
+                  <Phone className="h-3.5 w-3.5" /> Nomor WhatsApp
                 </span>
-                <p className="font-bold text-foreground text-sm">{order.customer_phone}</p>
+                <p className="font-bold text-foreground text-sm">{order.customer_whatsapp || '-'}</p>
               </div>
 
               <div className="space-y-1 sm:col-span-2 pt-2 border-t border-border/40">

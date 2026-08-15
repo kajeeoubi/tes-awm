@@ -19,15 +19,11 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet';
 import { toast } from 'sonner';
-
-interface Voucher {
-  code: string;
-  name: string;
-  desc: string;
-  type: 'shipping' | 'percent' | 'fixed';
-  value: number;
-  minSpend?: number;
-}
+import { Voucher } from '@/types/ecommerce';
+import { useVouchers } from '@/hooks/use-vouchers';
+import { useQueryClient } from '@tanstack/react-query';
+import { ORDERS_QUERY_KEY } from '@/hooks/use-orders';
+import { PRODUCTS_QUERY_KEY } from '@/hooks/use-products';
 
 const AVAILABLE_VOUCHERS: Voucher[] = [
   {
@@ -59,16 +55,17 @@ const STANDARD_SHIPPING_FEE = 20000;
 export function CartDrawer() {
   const { items, updateQuantity, removeFromCart, clearCart, totalItems, totalPrice, isCartOpen, setIsCartOpen } = useCart();
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const { data: availableVouchers = [] } = useVouchers();
 
   const [step, setStep] = useState<'cart' | 'checkout'>('cart');
   const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
+  const [customerWhatsapp, setCustomerWhatsapp] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
   const [promoInput, setPromoInput] = useState('');
   const [appliedVoucher, setAppliedVoucher] = useState<Voucher | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Reset state when drawer opens
   useEffect(() => {
     if (isCartOpen) {
       setStep('cart');
@@ -77,7 +74,6 @@ export function CartDrawer() {
 
   const isAddressFilled = customerAddress.trim().length >= 5;
 
-  // Calculate discounts & shipping
   let productDiscount = 0;
   let shippingDiscount = 0;
   let rawShippingFee = isAddressFilled ? STANDARD_SHIPPING_FEE : 0;
@@ -115,7 +111,7 @@ export function CartDrawer() {
       return;
     }
 
-    const found = AVAILABLE_VOUCHERS.find((v) => v.code === cleanCode);
+    const found = availableVouchers.find((v) => v.code === cleanCode);
     if (found) {
       applyVoucherObject(found);
     } else {
@@ -141,8 +137,8 @@ export function CartDrawer() {
       return;
     }
 
-    if (!customerPhone.trim() || customerPhone.length < 8) {
-      toast.error('Silakan isi nomor WhatsApp / HP yang valid.');
+    if (!customerWhatsapp.trim() || customerWhatsapp.length < 8) {
+      toast.error('Silakan isi nomor WhatsApp yang valid.');
       return;
     }
 
@@ -162,7 +158,12 @@ export function CartDrawer() {
         .insert({
           order_number: orderNumber,
           customer_name: customerName.trim(),
-          customer_phone: `${customerPhone.trim()} (${customerAddress.trim()})`,
+          customer_whatsapp: customerWhatsapp.trim(),
+          customer_address: customerAddress.trim(),
+          subtotal_amount: totalPrice,
+          shipping_fee: effectiveShippingFee,
+          discount_amount: productDiscount + shippingDiscount,
+          voucher_code: appliedVoucher?.code || null,
           total_amount: finalTotal,
           status: 'pending',
         })
@@ -199,12 +200,16 @@ export function CartDrawer() {
           .eq('id', item.product.id);
       }
 
+      // 4. Invalidate queries so admin & storefront refresh automatically
+      queryClient.invalidateQueries({ queryKey: ORDERS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEY });
+
       // Success
-      toast.success(`Pesanan #${orderNumber} berhasil dibuat!`);
+      toast.success(`Pesanan ${orderNumber} berhasil dibuat!`);
       clearCart();
       setIsCartOpen(false);
       setCustomerName('');
-      setCustomerPhone('');
+      setCustomerWhatsapp('');
       setCustomerAddress('');
       setAppliedVoucher(null);
       setStep('cart');
@@ -354,7 +359,7 @@ export function CartDrawer() {
               {/* Price Breakdown */}
               <div className="rounded-2xl border border-border/60 bg-background p-4 space-y-2">
                 <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Subtotal ({totalItems} barang)</span>
+                  <span>Subtotal {totalItems} barang</span>
                   <span>{formatRupiah(totalPrice)}</span>
                 </div>
                 <div className="flex justify-between text-xs text-muted-foreground">
@@ -363,7 +368,7 @@ export function CartDrawer() {
                 </div>
                 <Separator />
                 <div className="flex justify-between text-sm font-extrabold text-foreground pt-0.5">
-                  <span>Total Sementara</span>
+                  <span>Total Harga</span>
                   <span className="text-base text-foreground font-extrabold">{formatRupiah(totalPrice)}</span>
                 </div>
               </div>
@@ -403,15 +408,15 @@ export function CartDrawer() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="customer_phone" className="text-xs font-semibold">
-                      Nomor WhatsApp<span className="text-destructive">*</span>
+                    <Label htmlFor="customer_whatsapp" className="text-xs font-semibold">
+                      Nomor WhatsApp <span className="text-destructive">*</span>
                     </Label>
                     <Input
-                      id="customer_phone"
+                      id="customer_whatsapp"
                       type="tel"
-                      placeholder="Masukan nomor whatsapp aktif"
-                      value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      placeholder="Masukkan nomor WhatsApp aktif (08xxx)"
+                      value={customerWhatsapp}
+                      onChange={(e) => setCustomerWhatsapp(e.target.value)}
                       required
                       className="h-10 text-xs rounded-xl bg-background border-border/80"
                     />
@@ -472,7 +477,7 @@ export function CartDrawer() {
                           Pilihan Voucher Tersedia
                         </span>
                         <div className="flex flex-col gap-2">
-                          {AVAILABLE_VOUCHERS.map((v) => (
+                          {availableVouchers.map((v) => (
                             <div
                               key={v.code}
                               className="flex items-center justify-between p-2.5 rounded-xl border border-border/80 bg-background hover:border-neutral-400 transition-all text-xs"
@@ -534,7 +539,7 @@ export function CartDrawer() {
                   
                   {/* Subtotal */}
                   <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Subtotal ({totalItems} barang)</span>
+                    <span>Subtotal {totalItems} barang</span>
                     <span>{formatRupiah(totalPrice)}</span>
                   </div>
 

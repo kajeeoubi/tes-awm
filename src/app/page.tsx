@@ -1,5 +1,4 @@
 import Image from 'next/image';
-import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { Product } from '@/types/ecommerce';
 import { Navbar } from '@/components/navbar';
@@ -7,7 +6,7 @@ import { ProductCard } from '@/components/product-card';
 import { ProductGrid } from '@/components/product-grid';
 import { CartDrawer } from '@/components/cart-drawer';
 import { NewsletterForm } from '@/components/newsletter-form';
-import { ArrowRight, ChevronRight, Check, Sparkles } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
 export const revalidate = 0;
 

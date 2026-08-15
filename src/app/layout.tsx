@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/cart-context";
+import { QueryProvider } from "@/providers/query-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 
@@ -33,10 +34,12 @@ export default function RootLayout({
       className={cn("h-full", "antialiased", "scroll-smooth", geistSans.variable, geistMono.variable, "font-sans", inter.variable)}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-neutral-800 selection:text-white">
-        <CartProvider>
-          {children}
-          <Toaster position="top-center" closeButton />
-        </CartProvider>
+        <QueryProvider>
+          <CartProvider>
+            {children}
+            <Toaster position="top-center" closeButton />
+          </CartProvider>
+        </QueryProvider>
       </body>
     </html>
   );
