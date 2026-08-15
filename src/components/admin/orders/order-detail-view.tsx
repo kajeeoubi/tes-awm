@@ -173,13 +173,24 @@ export function OrderDetailView({ order: initialOrder }: OrderDetailViewProps) {
               <div className="flex items-center justify-between text-neutral-500">
                 <span>Subtotal Produk</span>
                 <span className="font-semibold text-neutral-900">
-                  {formatRupiah(order.total_amount)}
+                  {formatRupiah(order.subtotal_amount || (order.total_amount + (order.discount_amount || 0) - (order.shipping_fee || 0)))}
                 </span>
               </div>
+
+              {(order.discount_amount && order.discount_amount > 0) || order.voucher_code ? (
+                <div className="flex items-center justify-between text-emerald-600 font-medium">
+                  <span>Diskon Voucher {order.voucher_code ? `(${order.voucher_code})` : ''}</span>
+                  <span>-{formatRupiah(order.discount_amount || 0)}</span>
+                </div>
+              ) : null}
+
               <div className="flex items-center justify-between text-neutral-500">
                 <span>Biaya Pengiriman</span>
-                <span className="font-semibold text-emerald-600">Gratis Ongkir</span>
+                <span className={order.shipping_fee === 0 ? 'font-semibold text-emerald-600' : 'font-semibold text-neutral-900'}>
+                  {order.shipping_fee === 0 ? 'Gratis Ongkir' : formatRupiah(order.shipping_fee || 0)}
+                </span>
               </div>
+
               <div className="flex items-center justify-between pt-2 border-t border-neutral-100 text-sm">
                 <span className="font-bold text-neutral-900">Total Pembayaran</span>
                 <span className="font-bold text-neutral-900 text-base">
@@ -227,6 +238,15 @@ export function OrderDetailView({ order: initialOrder }: OrderDetailViewProps) {
                     </a>
                   )}
                 </div>
+              </div>
+
+              <div className="pt-2 border-t border-neutral-100">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-neutral-400 block mb-1">
+                  Alamat Pengiriman
+                </span>
+                <p className="font-medium text-neutral-800 leading-relaxed text-xs">
+                  {order.customer_address || 'Alamat tidak dicantumkan'}
+                </p>
               </div>
             </div>
           </Card>

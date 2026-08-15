@@ -94,6 +94,7 @@ export function AdminTopbarTitle() {
   }
 
   const getPageTitle = () => {
+    if (pathname === '/admin/settings') return 'Pengaturan Akun';
     if (pathname === '/admin/orders') return 'Pesanan';
     if (pathname === '/admin/products') return 'Katalog Produk';
     if (pathname === '/admin/vouchers') return 'Voucher & Promo';

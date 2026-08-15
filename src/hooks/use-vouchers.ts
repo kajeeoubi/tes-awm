@@ -15,8 +15,9 @@ export function useVouchers(includeInactive = false, initialData?: Voucher[]) {
 
   // Realtime WebSocket Subscription
   useEffect(() => {
+    const channelId = `realtime_vouchers_${Math.random().toString(36).substring(2, 9)}`;
     const channel = supabase
-      .channel('realtime_vouchers_channel')
+      .channel(channelId)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'vouchers' },
@@ -65,7 +66,7 @@ export function useCreateVoucher() {
       const { data, error } = await supabase
         .from('vouchers')
         .insert({
-          code: voucherData.code?.toUpperCase().trim(),
+          code: voucherData.code?.trim(),
           name: voucherData.name,
           description: voucherData.description || voucherData.desc,
           type: voucherData.type,
@@ -99,7 +100,7 @@ export function useUpdateVoucher() {
       const { data: updated, error } = await supabase
         .from('vouchers')
         .update({
-          code: data.code?.toUpperCase().trim(),
+          code: data.code?.trim(),
           name: data.name,
           description: data.description || data.desc,
           type: data.type,

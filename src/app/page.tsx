@@ -2,25 +2,29 @@ import Image from 'next/image';
 import { createClient } from '@/lib/supabase/server';
 import { Product } from '@/types/ecommerce';
 import { Navbar } from '@/components/navbar';
-import { ProductCard } from '@/components/product-card';
 import { ProductGrid } from '@/components/product-grid';
+import { HomeNewArrivals } from '@/components/home/home-new-arrivals';
+import { HomeCategories } from '@/components/home/home-categories';
+import { HomeSpecialOffers } from '@/components/home/home-special-offers';
 import { CartDrawer } from '@/components/cart-drawer';
 import { NewsletterForm } from '@/components/newsletter-form';
-import { ChevronRight } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function HomePage() {
   const supabase = await createClient();
 
-  const { data: products } = await supabase
+  const { data: products, error } = await supabase
     .from('products')
     .select('*')
     .order('created_at', { ascending: false });
 
+  if (error) {
+    console.error('Error fetching products on homepage:', error);
+  }
+
   const productList: Product[] = products || [];
-  const newArrivals = productList.slice(0, 4);
-  const specialOffers = productList.slice(0, 4);
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-[#222222] font-sans antialiased selection:bg-neutral-800 selection:text-white">
@@ -84,16 +88,12 @@ export default async function HomePage() {
           {/* TIER 2 / GRID 2 (Bottom Hero Grid - Clean Flat Overlapping Surface) */}
           <div className="relative z-10 min-h-[calc(100vh-4.5rem)] bg-white flex items-stretch">
             <div className="w-full grid grid-cols-1 lg:grid-cols-2 items-stretch">
-              {/* Left Column: New Arrivals (4 Products 2x2 Grid) */}
+              {/* Left Column: New Arrivals (4 Products 2x2 Grid, synchronized) */}
               <div id="new-arrivals" className="scroll-mt-24 flex flex-col justify-center px-6 sm:px-12 lg:pl-16 lg:pr-12 pt-6 pb-10 lg:py-8 space-y-3">
                 <h3 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
                   Produk Terbaru
                 </h3>
-                <div className="grid grid-cols-2 gap-3.5 sm:gap-4">
-                  {newArrivals.map((product) => (
-                    <ProductCard key={product.id} product={product} badgeText="BARU" />
-                  ))}
-                </div>
+                <HomeNewArrivals initialProducts={productList} />
               </div>
 
               {/* Right Column: Dark Charcoal Pro Gear Banner (Flush Right) */}
@@ -125,85 +125,14 @@ export default async function HomePage() {
         </div>
 
         {/* =========================================================================
-            SECTION 2: SHOP BY CATEGORY (3 Photographic Column Cards)
+            SECTION 2: SHOP BY CATEGORY (Dynamic Synchronized Categories)
             ========================================================================= */}
-        <section id="categories" className="scroll-mt-24 bg-[#fafafa] py-16 border-y border-neutral-200/60">
-          <div className="container mx-auto px-4 sm:px-8">
-            <h2 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] mb-8">
-              Belanja Berdasarkan Kategori
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Category 1 */}
-              <a href="#catalog" className="group block space-y-3">
-                <div className="relative aspect-16/10 w-full overflow-hidden rounded-xl bg-neutral-200">
-                  <Image
-                    src="https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=800&auto=format&fit=crop&q=80"
-                    alt="Aksesori & Periferal"
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                </div>
-                <h4 className="text-xs font-bold text-neutral-900 group-hover:underline underline-offset-2">
-                  Aksesori & Periferal
-                </h4>
-              </a>
-
-              {/* Category 2 */}
-              <a href="#catalog" className="group block space-y-3">
-                <div className="relative aspect-16/10 w-full overflow-hidden rounded-xl bg-neutral-200">
-                  <Image
-                    src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80"
-                    alt="Speaker & Headphone"
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                </div>
-                <h4 className="text-xs font-bold text-neutral-900 group-hover:underline underline-offset-2">
-                  Speaker & Headphone
-                </h4>
-              </a>
-
-              {/* Category 3 */}
-              <a href="#catalog" className="group block space-y-3">
-                <div className="relative aspect-16/10 w-full overflow-hidden rounded-xl bg-neutral-200">
-                  <Image
-                    src="https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800&auto=format&fit=crop&q=80"
-                    alt="Monitor & Layar"
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                </div>
-                <h4 className="text-xs font-bold text-neutral-900 group-hover:underline underline-offset-2">
-                  Monitor & Layar
-                </h4>
-              </a>
-            </div>
-          </div>
-        </section>
+        <HomeCategories initialProducts={productList} />
 
         {/* =========================================================================
-            SECTION 3: SPECIAL OFFERS (4-Grid with "Lihat Semua >" Button)
+            SECTION 3: SPECIAL OFFERS (Synchronized 4-Grid)
             ========================================================================= */}
-        <section id="special-offers" className="scroll-mt-24 container mx-auto px-4 sm:px-8 py-16">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
-              Penawaran Khusus
-            </h2>
-            <a href="#catalog">
-              <button className="rounded-full border border-neutral-300 px-4 py-1.5 text-xs font-semibold text-neutral-700 hover:border-neutral-900 hover:text-neutral-900 transition-colors flex items-center gap-1">
-                <span>Lihat Semua</span>
-                <ChevronRight className="h-3.5 w-3.5" />
-              </button>
-            </a>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {specialOffers.map((product) => (
-              <ProductCard key={product.id} product={product} badgeText="PROMO" />
-            ))}
-          </div>
-        </section>
+        <HomeSpecialOffers initialProducts={productList} />
 
         {/* =========================================================================
             SECTION 4 & 5: DUAL PROMO CTA BANNERS (Seamless Sticky Stack Overlay)
@@ -327,7 +256,7 @@ export default async function HomePage() {
                 <span>Sparke</span>
               </div>
               <p className="text-[11px] text-neutral-400 leading-relaxed">
-                Elektronik premium, periferal komputer, dan aksesori audio berkualitas tinggi.
+                Elektronik premium dan aksesori teknologi berkualitas tinggi.
               </p>
               <p className="text-[11px] text-white font-semibold pt-1">
                 (021) 5000-8888
@@ -340,7 +269,7 @@ export default async function HomePage() {
               <p><a href="#catalog" className="hover:text-white transition-colors">Semua Produk</a></p>
               <p><a href="#special-offers" className="hover:text-white transition-colors">Penawaran Khusus</a></p>
               <p><a href="#new-arrivals" className="hover:text-white transition-colors">Produk Terbaru</a></p>
-              <p><a href="#categories" className="hover:text-white transition-colors">Periferal & Aksesori</a></p>
+              <p><a href="#categories" className="hover:text-white transition-colors">Aksesori</a></p>
               <p><a href="#categories" className="hover:text-white transition-colors">Speaker & Headphone</a></p>
             </div>
 

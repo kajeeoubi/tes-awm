@@ -15,8 +15,9 @@ export function useProducts(initialData?: Product[]) {
 
   // Realtime WebSocket Subscription
   useEffect(() => {
+    const channelId = `realtime_products_${Math.random().toString(36).substring(2, 9)}`;
     const channel = supabase
-      .channel('realtime_products_channel')
+      .channel(channelId)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'products' },

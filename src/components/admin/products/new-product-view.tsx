@@ -1,15 +1,21 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Product } from '@/types/ecommerce';
+import { Product, PRODUCT_CATEGORIES } from '@/types/ecommerce';
 import { useCreateProduct } from '@/hooks/use-products';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Package, Image as ImageIcon, DollarSign, Layers } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Package, Image as ImageIcon, DollarSign, ChevronDown, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 export function NewProductView() {
@@ -17,7 +23,7 @@ export function NewProductView() {
   const createMutation = useCreateProduct();
 
   const [name, setName] = useState('');
-  const [category, setCategory] = useState('');
+  const [category, setCategory] = useState<string>(PRODUCT_CATEGORIES[0]);
   const [price, setPrice] = useState<number | ''>('');
   const [stock, setStock] = useState<number | ''>('');
   const [imageUrl, setImageUrl] = useState('');
@@ -45,7 +51,7 @@ export function NewProductView() {
     try {
       const payload: Partial<Product> = {
         name: name.trim(),
-        category: category.trim() || 'General',
+        category: category || PRODUCT_CATEGORIES[0],
         price: Number(price),
         stock: Number(stock),
         image_url: imageUrl.trim() || 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=600&auto=format&fit=crop&q=80',
@@ -96,25 +102,57 @@ export function NewProductView() {
                 id="product_name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Contoh: Mechanical Keyboard RGB Wireless 75%"
+                placeholder="Masukkan Nama Produk"
                 required
                 className="h-10 rounded-xl text-xs bg-neutral-50/50"
               />
             </div>
 
-            {/* Category */}
+            {/* Category Dropdown */}
             <div className="space-y-1.5">
-              <Label htmlFor="category" className="text-xs font-semibold flex items-center gap-1">
-                <Layers className="h-3.5 w-3.5 text-neutral-400" />
-                <span>Kategori Produk</span>
+              <Label className="text-xs font-semibold">
+                Kategori Produk <span className="text-destructive">*</span>
               </Label>
-              <Input
-                id="category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                placeholder="Contoh: Peripherals, Audio, Display"
-                className="h-10 rounded-xl text-xs"
-              />
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <button
+                      type="button"
+                      className="w-full h-10 px-3.5 rounded-xl text-xs bg-neutral-50/50 border border-neutral-200 text-foreground flex items-center justify-between text-left cursor-pointer outline-none hover:bg-neutral-100/60 focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/10 transition-colors"
+                    />
+                  }
+                >
+                  <span className="truncate">{category || PRODUCT_CATEGORIES[0]}</span>
+                  <ChevronDown className="h-3.5 w-3.5 text-neutral-400 shrink-0 ml-2" />
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent
+                  align="start"
+                  sideOffset={4}
+                  className="w-(--anchor-width) min-w-[200px] rounded-xl p-1.5 shadow-lg border border-neutral-200 bg-white z-50"
+                >
+                  {PRODUCT_CATEGORIES.map((cat) => {
+                    const isSelected = (category || PRODUCT_CATEGORIES[0]) === cat;
+                    return (
+                      <DropdownMenuItem
+                        key={cat}
+                        onClick={() => setCategory(cat)}
+                        className={cn(
+                          "flex items-center justify-between text-xs cursor-pointer rounded-lg px-2.5 py-2 transition-colors",
+                          isSelected
+                            ? "bg-neutral-100 font-semibold text-neutral-900"
+                            : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
+                        )}
+                      >
+                        <span>{cat}</span>
+                        {isSelected && (
+                          <Check className="h-3.5 w-3.5 text-neutral-900 shrink-0" />
+                        )}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             {/* Image URL */}
@@ -128,7 +166,7 @@ export function NewProductView() {
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}
                 placeholder="https://images.unsplash.com/..."
-                className="h-10 rounded-xl text-xs"
+                className="h-10 rounded-xl text-xs bg-neutral-50/50 font-normal"
               />
             </div>
 
@@ -143,7 +181,7 @@ export function NewProductView() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Jelaskan fitur unggulan, dimensi, konektivitas, dan kelebihan produk..."
-                className="w-full text-xs rounded-xl bg-background border border-neutral-200 p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 placeholder:text-neutral-400 transition-all resize-none"
+                className="w-full text-xs font-normal rounded-xl bg-neutral-50/50 border border-neutral-200 p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 placeholder:text-muted-foreground placeholder:font-normal transition-all resize-none"
               />
             </div>
           </div>
@@ -168,9 +206,9 @@ export function NewProductView() {
                 min={0}
                 value={price}
                 onChange={(e) => setPrice(e.target.value === '' ? '' : Number(e.target.value))}
-                placeholder="Contoh: 850000"
+                placeholder="Masukkan Harga"
                 required
-                className="h-10 rounded-xl text-xs font-semibold"
+                className="h-10 rounded-xl text-xs bg-neutral-50/50 font-normal"
               />
             </div>
 
@@ -185,9 +223,9 @@ export function NewProductView() {
                 min={0}
                 value={stock}
                 onChange={(e) => setStock(e.target.value === '' ? '' : Number(e.target.value))}
-                placeholder="Contoh: 25"
+                placeholder="Masukkan Jumlah Stok"
                 required
-                className="h-10 rounded-xl text-xs font-semibold"
+                className="h-10 rounded-xl text-xs bg-neutral-50/50 font-normal"
               />
             </div>
           </div>

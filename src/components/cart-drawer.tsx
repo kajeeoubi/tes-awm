@@ -58,6 +58,8 @@ export function CartDrawer() {
   const queryClient = useQueryClient();
   const { data: availableVouchers = [] } = useVouchers();
 
+  const voucherList = availableVouchers && availableVouchers.length > 0 ? availableVouchers : AVAILABLE_VOUCHERS;
+
   const [step, setStep] = useState<'cart' | 'checkout'>('cart');
   const [customerName, setCustomerName] = useState('');
   const [customerWhatsapp, setCustomerWhatsapp] = useState('');
@@ -92,8 +94,9 @@ export function CartDrawer() {
   const finalTotal = Math.max(0, totalPrice - productDiscount + effectiveShippingFee);
 
   const applyVoucherObject = (voucher: Voucher) => {
-    if (voucher.minSpend && totalPrice < voucher.minSpend) {
-      toast.error(`Minimal belanja untuk voucher ${voucher.code} adalah ${formatRupiah(voucher.minSpend)}`);
+    const minSpend = voucher.min_spend ?? voucher.minSpend ?? 0;
+    if (minSpend > 0 && totalPrice < minSpend) {
+      toast.error(`Minimal belanja untuk voucher ${voucher.code} adalah ${formatRupiah(minSpend)}`);
       return;
     }
 
@@ -111,11 +114,11 @@ export function CartDrawer() {
       return;
     }
 
-    const found = availableVouchers.find((v) => v.code === cleanCode);
+    const found = voucherList.find((v) => v.code.toUpperCase() === cleanCode);
     if (found) {
       applyVoucherObject(found);
     } else {
-      toast.error('Kode voucher tidak ditemukan atau sudah kedaluwarsa.');
+      toast.error('Kode voucher tidak ditemukan atau sudah tidak aktif.');
     }
   };
 
@@ -142,21 +145,18 @@ export function CartDrawer() {
       return;
     }
 
-    if (!customerAddress.trim()) {
-      toast.error('Silakan isi alamat lengkap pengiriman.');
+    if (!customerAddress.trim() || customerAddress.trim().length < 5) {
+      toast.error('Silakan isi alamat lengkap pengiriman (min. 5 karakter).');
       return;
     }
 
     setIsSubmitting(true);
-    const supabase = createClient();
-    const orderNumber = generateOrderNumber();
 
     try {
-      // 1. Insert Order
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          order_number: orderNumber,
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           customer_name: customerName.trim(),
           customer_whatsapp: customerWhatsapp.trim(),
           customer_address: customerAddress.trim(),
@@ -165,47 +165,29 @@ export function CartDrawer() {
           discount_amount: productDiscount + shippingDiscount,
           voucher_code: appliedVoucher?.code || null,
           total_amount: finalTotal,
-          status: 'pending',
-        })
-        .select('id, order_number')
-        .single();
+          items: items.map((item) => ({
+            product_id: item.product.id,
+            quantity: item.quantity,
+            price: item.product.price,
+            subtotal: item.product.price * item.quantity,
+          })),
+        }),
+      });
 
-      if (orderError || !orderData) {
-        throw new Error(orderError?.message || 'Gagal memproses pesanan.');
+      const resData = await response.json();
+
+      if (!response.ok || !resData?.order?.order_number) {
+        throw new Error(resData?.error || 'Gagal memproses pesanan.');
       }
 
-      // 2. Insert Order Items
-      const orderItemsToInsert = items.map((item) => ({
-        order_id: orderData.id,
-        product_id: item.product.id,
-        quantity: item.quantity,
-        price: item.product.price,
-        subtotal: item.product.price * item.quantity,
-      }));
+      const createdOrderNumber = resData.order.order_number;
 
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItemsToInsert);
-
-      if (itemsError) {
-        throw new Error(itemsError.message);
-      }
-
-      // 3. Decrement Product Stocks
-      for (const item of items) {
-        const newStock = Math.max(0, item.product.stock - item.quantity);
-        await supabase
-          .from('products')
-          .update({ stock: newStock })
-          .eq('id', item.product.id);
-      }
-
-      // 4. Invalidate queries so admin & storefront refresh automatically
+      // Invalidate queries so admin & storefront refresh automatically
       queryClient.invalidateQueries({ queryKey: ORDERS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEY });
 
       // Success
-      toast.success(`Pesanan ${orderNumber} berhasil dibuat!`);
+      toast.success(`Pesanan ${createdOrderNumber} berhasil dibuat!`);
       clearCart();
       setIsCartOpen(false);
       setCustomerName('');
@@ -215,7 +197,7 @@ export function CartDrawer() {
       setStep('cart');
 
       // Redirect to Order Success page
-      router.push(`/order-success/${orderNumber}`);
+      router.push(`/order-success/${createdOrderNumber}`);
     } catch (err: any) {
       console.error('Checkout error:', err);
       toast.error(err.message || 'Terjadi kesalahan saat memproses pesanan.');
@@ -477,7 +459,7 @@ export function CartDrawer() {
                           Pilihan Voucher Tersedia
                         </span>
                         <div className="flex flex-col gap-2">
-                          {availableVouchers.map((v) => (
+                          {voucherList.map((v) => (
                             <div
                               key={v.code}
                               className="flex items-center justify-between p-2.5 rounded-xl border border-border/80 bg-background hover:border-neutral-400 transition-all text-xs"

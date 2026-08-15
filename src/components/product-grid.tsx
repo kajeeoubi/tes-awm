@@ -1,30 +1,47 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { Search, PackageOpen, X } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Search, PackageOpen, X, Sparkles } from 'lucide-react';
 import { Product } from '@/types/ecommerce';
 import { ProductCard } from '@/components/product-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useProducts } from '@/hooks/use-products';
 
 interface ProductGridProps {
   initialProducts: Product[];
 }
 
 export function ProductGrid({ initialProducts }: ProductGridProps) {
+  const { data: products = initialProducts } = useProducts(initialProducts);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
+  // Listen for category selection events dispatched from other sections
+  useEffect(() => {
+    const handleCategoryEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<{ category: string }>;
+      if (customEvent.detail && customEvent.detail.category) {
+        setSelectedCategory(customEvent.detail.category);
+      }
+    };
+
+    window.addEventListener('sparke:select-category', handleCategoryEvent);
+    return () => {
+      window.removeEventListener('sparke:select-category', handleCategoryEvent);
+    };
+  }, []);
+
   const categories = useMemo(() => {
     const set = new Set<string>();
-    initialProducts.forEach((p) => {
+    products.forEach((p) => {
       if (p.category) set.add(p.category);
     });
     return ['all', ...Array.from(set)];
-  }, [initialProducts]);
+  }, [products]);
 
   const filteredProducts = useMemo(() => {
-    return initialProducts.filter((product) => {
+    return products.filter((product) => {
       const matchesSearch =
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (product.description && product.description.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -34,7 +51,7 @@ export function ProductGrid({ initialProducts }: ProductGridProps) {
 
       return matchesSearch && matchesCategory;
     });
-  }, [initialProducts, searchQuery, selectedCategory]);
+  }, [products, searchQuery, selectedCategory]);
 
   return (
     <div className="space-y-8">
@@ -86,7 +103,8 @@ export function ProductGrid({ initialProducts }: ProductGridProps) {
       {/* Results Header */}
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>
-          Menampilkan <strong className="text-foreground">{filteredProducts.length}</strong> produk
+          Menampilkan <strong className="text-foreground">{filteredProducts.length}</strong> dari{' '}
+          <strong className="text-foreground">{products.length}</strong> produk
         </span>
         {(searchQuery || selectedCategory !== 'all') && (
           <button
@@ -109,19 +127,23 @@ export function ProductGrid({ initialProducts }: ProductGridProps) {
           </div>
           <h3 className="text-sm font-bold text-foreground">Produk Tidak Ditemukan</h3>
           <p className="mt-1 text-xs text-muted-foreground max-w-sm">
-            Tidak ada produk yang cocok dengan kata kunci atau filter yang Anda pilih.
+            {products.length === 0
+              ? 'Belum ada produk yang tersedia di database.'
+              : 'Tidak ada produk yang cocok dengan kata kunci atau filter yang Anda pilih.'}
           </p>
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-4 rounded-full text-xs font-medium"
-            onClick={() => {
-              setSearchQuery('');
-              setSelectedCategory('all');
-            }}
-          >
-            Lihat Semua Produk
-          </Button>
+          {products.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-4 rounded-full text-xs font-medium"
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedCategory('all');
+              }}
+            >
+              Lihat Semua Produk
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">

@@ -8,8 +8,21 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Trash2, Tag, Percent } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Trash2, Tag, Percent, ChevronDown, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+
+const VOUCHER_TYPE_LABELS: Record<VoucherType, string> = {
+  percent: 'Persentase (%)',
+  fixed: 'Nominal Tetap (Rp)',
+  shipping: 'Gratis Ongkir (Rp)',
+};
 
 interface EditVoucherViewProps {
   voucher: Voucher;
@@ -72,11 +85,11 @@ export function EditVoucherView({ voucher }: EditVoucherViewProps) {
         <div className="space-y-1">
           <div className="flex items-center gap-3">
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1a1a1a]">
-              Ubah Voucher: {voucher.code}
+              Edit Voucher: {voucher.code}
             </h1>
           </div>
           <p className="text-xs sm:text-sm text-neutral-500 font-normal">
-            Perbarui rincian potongan diskon, minimal belanja, dan status aktif voucher promo.
+            Perbarui parameter potongan harga, minimum transaksi, dan status keaktifan promo.
           </p>
         </div>
 
@@ -107,7 +120,7 @@ export function EditVoucherView({ voucher }: EditVoucherViewProps) {
               </Label>
               <Input
                 id="code"
-                placeholder="Contoh: HEMAT50, SPARKE10"
+                placeholder="Masukkan Kode Promo"
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 required
@@ -122,11 +135,11 @@ export function EditVoucherView({ voucher }: EditVoucherViewProps) {
               </Label>
               <Input
                 id="name"
-                placeholder="Contoh: Diskon Pelanggan Baru 10%"
+                placeholder="Masukkan Nama Voucher"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="h-10 text-xs rounded-xl"
+                className="h-10 text-xs rounded-xl bg-neutral-50/50 font-normal"
               />
             </div>
 
@@ -137,10 +150,10 @@ export function EditVoucherView({ voucher }: EditVoucherViewProps) {
               </Label>
               <Input
                 id="description"
-                placeholder="Contoh: Bebas ongkos kirim ke seluruh Indonesia tanpa min. belanja"
+                placeholder="Masukkan Deskripsi Promo"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="h-10 text-xs rounded-xl"
+                className="h-10 text-xs rounded-xl bg-neutral-50/50 font-normal"
               />
             </div>
           </div>
@@ -154,21 +167,51 @@ export function EditVoucherView({ voucher }: EditVoucherViewProps) {
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Tipe Diskon */}
+            {/* Tipe Diskon Dropdown */}
             <div className="space-y-1.5">
-              <Label htmlFor="type" className="text-xs font-semibold">
+              <Label className="text-xs font-semibold">
                 Jenis Diskon <span className="text-destructive">*</span>
               </Label>
-              <select
-                id="type"
-                value={type}
-                onChange={(e) => setType(e.target.value as VoucherType)}
-                className="w-full h-10 rounded-xl border border-neutral-200 bg-background px-3 text-xs focus:outline-none focus:ring-2 focus:ring-neutral-900 font-medium"
-              >
-                <option value="percent">Persentase (%)</option>
-                <option value="fixed">Nominal Tetap (Rp)</option>
-                <option value="shipping">Gratis Ongkir (Rp)</option>
-              </select>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <button
+                      type="button"
+                      className="w-full h-10 px-3.5 rounded-xl text-xs bg-neutral-50/50 border border-neutral-200 text-foreground flex items-center justify-between text-left cursor-pointer outline-none hover:bg-neutral-100/60 focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/10 transition-colors font-normal"
+                    />
+                  }
+                >
+                  <span className="truncate">{VOUCHER_TYPE_LABELS[type]}</span>
+                  <ChevronDown className="h-3.5 w-3.5 text-neutral-400 shrink-0 ml-2" />
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent
+                  align="start"
+                  sideOffset={4}
+                  className="w-(--anchor-width) min-w-[200px] rounded-xl p-1.5 shadow-lg border border-neutral-200 bg-white z-50"
+                >
+                  {(['percent', 'fixed', 'shipping'] as VoucherType[]).map((t) => {
+                    const isSelected = type === t;
+                    return (
+                      <DropdownMenuItem
+                        key={t}
+                        onClick={() => setType(t)}
+                        className={cn(
+                          "flex items-center justify-between text-xs cursor-pointer rounded-lg px-2.5 py-2 transition-colors",
+                          isSelected
+                            ? "bg-neutral-100 font-semibold text-neutral-900"
+                            : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
+                        )}
+                      >
+                        <span>{VOUCHER_TYPE_LABELS[t]}</span>
+                        {isSelected && (
+                          <Check className="h-3.5 w-3.5 text-neutral-900 shrink-0" />
+                        )}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             {/* Nilai Diskon */}
@@ -183,7 +226,7 @@ export function EditVoucherView({ voucher }: EditVoucherViewProps) {
                 value={value}
                 onChange={(e) => setValue(Number(e.target.value))}
                 required
-                className="h-10 text-xs rounded-xl font-semibold"
+                className="h-10 text-xs rounded-xl bg-neutral-50/50 font-normal"
               />
             </div>
 
@@ -199,24 +242,58 @@ export function EditVoucherView({ voucher }: EditVoucherViewProps) {
                 placeholder="0 jika tidak ada minimal"
                 value={minSpend}
                 onChange={(e) => setMinSpend(Number(e.target.value))}
-                className="h-10 text-xs rounded-xl"
+                className="h-10 text-xs rounded-xl bg-neutral-50/50 font-normal"
               />
             </div>
 
-            {/* Status Aktif */}
+            {/* Status Aktif Dropdown */}
             <div className="space-y-1.5">
-              <Label htmlFor="isActive" className="text-xs font-semibold">
+              <Label className="text-xs font-semibold">
                 Status Voucher
               </Label>
-              <select
-                id="isActive"
-                value={isActive ? 'true' : 'false'}
-                onChange={(e) => setIsActive(e.target.value === 'true')}
-                className="w-full h-10 rounded-xl border border-neutral-200 bg-background px-3 text-xs focus:outline-none focus:ring-2 focus:ring-neutral-900 font-medium"
-              >
-                <option value="true">Aktif (Dapat Digunakan Pelanggan)</option>
-                <option value="false">Nonaktif (Diarsipkan)</option>
-              </select>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <button
+                      type="button"
+                      className="w-full h-10 px-3.5 rounded-xl text-xs bg-neutral-50/50 border border-neutral-200 text-foreground flex items-center justify-between text-left cursor-pointer outline-none hover:bg-neutral-100/60 focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/10 transition-colors font-normal"
+                    />
+                  }
+                >
+                  <span className="truncate">{isActive ? 'Aktif' : 'Nonaktif'}</span>
+                  <ChevronDown className="h-3.5 w-3.5 text-neutral-400 shrink-0 ml-2" />
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent
+                  align="start"
+                  sideOffset={4}
+                  className="w-(--anchor-width) min-w-[160px] rounded-xl p-1.5 shadow-lg border border-neutral-200 bg-white z-50"
+                >
+                  {[
+                    { value: true, label: 'Aktif' },
+                    { value: false, label: 'Nonaktif' },
+                  ].map((opt) => {
+                    const isSelected = isActive === opt.value;
+                    return (
+                      <DropdownMenuItem
+                        key={opt.label}
+                        onClick={() => setIsActive(opt.value)}
+                        className={cn(
+                          "flex items-center justify-between text-xs cursor-pointer rounded-lg px-2.5 py-2 transition-colors",
+                          isSelected
+                            ? "bg-neutral-100 font-semibold text-neutral-900"
+                            : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
+                        )}
+                      >
+                        <span>{opt.label}</span>
+                        {isSelected && (
+                          <Check className="h-3.5 w-3.5 text-neutral-900 shrink-0" />
+                        )}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </Card>

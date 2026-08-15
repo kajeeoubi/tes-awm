@@ -1,3 +1,13 @@
+export const PRODUCT_CATEGORIES = [
+  'Aksesori',
+  'Speaker & Headphone',
+  'Monitor & Layar',
+  'Penyimpanan',
+  'Perangkat Pintar',
+] as const;
+
+export type ProductCategory = (typeof PRODUCT_CATEGORIES)[number];
+
 export interface Product {
   id: string;
   name: string;
@@ -83,3 +93,15 @@ export interface DailySalesData {
   orders: number;
   revenue: number;
 }
+
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  role: 'superadmin' | 'admin';
+  avatar_url?: string | null;
+  last_login_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+

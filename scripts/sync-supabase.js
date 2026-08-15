@@ -65,6 +65,10 @@ async function runSync() {
     const vouchRes = await client.query('SELECT COUNT(*) FROM public.vouchers;');
     console.log('Total Vouchers in Database:', vouchRes.rows[0].count);
 
+    // Verify admins count
+    const adminRes = await client.query('SELECT COUNT(*) FROM public.admins;');
+    console.log('Total Admins in Database:', adminRes.rows[0].count);
+
   } catch (err) {
     console.error('Database Sync Error:', err);
     process.exit(1);

@@ -15,8 +15,9 @@ export function useOrders(initialData?: Order[]) {
 
   // Realtime WebSocket Subscription
   useEffect(() => {
+    const channelId = `realtime_orders_${Math.random().toString(36).substring(2, 9)}`;
     const channel = supabase
-      .channel('realtime_orders_channel')
+      .channel(channelId)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders' },
@@ -70,8 +71,9 @@ export function useOrderDetail(orderIdOrNumber: string, initialData?: Order) {
   useEffect(() => {
     if (!orderIdOrNumber) return;
 
+    const channelId = `realtime_order_${orderIdOrNumber}_${Math.random().toString(36).substring(2, 9)}`;
     const channel = supabase
-      .channel(`realtime_order_${orderIdOrNumber}`)
+      .channel(channelId)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders' },

@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import {
   Sidebar,
   SidebarContent,
@@ -26,15 +27,58 @@ import {
   Package,
   ShoppingBag,
   Tag,
-  Settings,
   ChevronsUpDown,
   LogOut,
   User,
+  Shield,
+  Settings,
 } from 'lucide-react';
+import { AdminUser } from '@/types/ecommerce';
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { isMobile } = useSidebar();
+  const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/admin/auth/me')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.user) {
+          setAdminUser(data.user);
+        }
+      })
+      .catch(() => {});
+
+    const handleProfileUpdate = (e: CustomEvent<AdminUser>) => {
+      if (e.detail) {
+        setAdminUser(e.detail);
+      }
+    };
+
+    window.addEventListener('sparke:admin-profile-updated' as any, handleProfileUpdate);
+    return () => {
+      window.removeEventListener('sparke:admin-profile-updated' as any, handleProfileUpdate);
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await fetch('/api/admin/auth/logout', { method: 'POST' });
+      toast.success('Berhasil Keluar', {
+        description: 'Sesi admin telah diakhiri dengan aman.',
+      });
+      router.push('/admin/login');
+      router.refresh();
+    } catch {
+      toast.error('Gagal keluar');
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   const navItems = [
     { id: 'overview', label: 'Ringkasan', href: '/admin', icon: LayoutDashboard },
@@ -42,6 +86,18 @@ export function AppSidebar() {
     { id: 'products', label: 'Katalog Produk', href: '/admin/products', icon: Package },
     { id: 'vouchers', label: 'Voucher & Promo', href: '/admin/vouchers', icon: Tag },
   ];
+
+  const adminInitials = adminUser?.name
+    ? adminUser.name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .substring(0, 2)
+        .toUpperCase()
+    : 'AP';
+
+  const adminName = adminUser?.name || 'Admin Pusat';
+  const adminEmail = adminUser?.email || 'admin@sparke.id';
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border/40 bg-white font-sans">
@@ -95,51 +151,74 @@ export function AppSidebar() {
                 render={
                   <SidebarMenuButton
                     size="lg"
-                    tooltip="Admin Pusat"
+                    tooltip={adminName}
                     className="data-[state=open]:bg-neutral-100 hover:bg-neutral-100/80 rounded-xl px-2 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center transition-colors"
                   />
                 }
               >
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 font-semibold text-[11px] shrink-0">
-                  AP
-                </div>
+                {adminUser?.avatar_url ? (
+                  <img
+                    src={adminUser.avatar_url}
+                    alt={adminName}
+                    className="h-7 w-7 rounded-lg object-cover border border-neutral-200 shrink-0"
+                  />
+                ) : (
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 font-semibold text-[11px] shrink-0">
+                    {adminInitials}
+                  </div>
+                )}
                 <div className="grid flex-1 text-left text-xs leading-tight ml-1 min-w-0 group-data-[collapsible=icon]:hidden">
                   <span className="truncate font-semibold text-neutral-900 dark:text-white text-[11px]">
-                    Admin Pusat
+                    {adminName}
                   </span>
                   <span className="truncate text-[9px] text-neutral-400">
-                    admin@sparke.id
+                    {adminEmail}
                   </span>
                 </div>
                 <ChevronsUpDown className="ml-auto size-3.5 text-neutral-400 shrink-0 group-data-[collapsible=icon]:hidden" />
               </DropdownMenuTrigger>
 
               <DropdownMenuContent
-                className="w-[172px] rounded-xl p-1.5 shadow-lg border border-neutral-200 bg-white"
+                className="w-[185px] rounded-xl p-1.5 shadow-lg border border-neutral-200 bg-white"
                 side="top"
                 align="center"
                 sideOffset={8}
               >
                 <div className="flex items-center gap-2 px-2 py-2 text-left text-xs">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-neutral-900 text-white font-semibold text-[11px] shrink-0">
-                    AP
-                  </div>
+                  {adminUser?.avatar_url ? (
+                    <img
+                      src={adminUser.avatar_url}
+                      alt={adminName}
+                      className="h-7 w-7 rounded-lg object-cover border border-neutral-200 shrink-0"
+                    />
+                  ) : (
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-neutral-900 text-white font-semibold text-[11px] shrink-0">
+                      {adminInitials}
+                    </div>
+                  )}
                   <div className="grid flex-1 text-left text-xs leading-tight min-w-0">
-                    <span className="truncate font-semibold text-neutral-900 text-[11px]">Admin Pusat</span>
-                    <span className="truncate text-[9px] text-neutral-400">admin@sparke.id</span>
+                    <span className="truncate font-semibold text-neutral-900 text-[11px]">{adminName}</span>
+                    <span className="truncate text-[9px] text-neutral-400">{adminEmail}</span>
                   </div>
                 </div>
                 <DropdownMenuSeparator className="my-1 bg-neutral-100" />
                 <DropdownMenuGroup>
-                  <DropdownMenuItem className="text-xs cursor-pointer rounded-lg px-2 py-1.5 hover:bg-neutral-100 flex items-center gap-2">
-                    <User className="h-3.5 w-3.5 text-neutral-500" />
-                    <span>Profil Akun</span>
+                  <DropdownMenuItem
+                    onClick={() => router.push('/admin/settings')}
+                    className="text-xs cursor-pointer rounded-lg px-2 py-1.5 hover:bg-neutral-100 flex items-center gap-2 text-neutral-700 font-medium"
+                  >
+                    <Settings className="h-3.5 w-3.5 text-neutral-500" />
+                    <span>Pengaturan Akun</span>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator className="my-1 bg-neutral-100" />
-                <DropdownMenuItem className="text-xs text-red-600 cursor-pointer rounded-lg px-2 py-1.5 hover:bg-red-50 focus:bg-red-50 flex items-center gap-2">
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="text-xs text-red-600 cursor-pointer rounded-lg px-2 py-1.5 hover:bg-red-50 focus:bg-red-50 flex items-center gap-2"
+                >
                   <LogOut className="h-3.5 w-3.5 text-red-600" />
-                  <span>Keluar</span>
+                  <span>{isLoggingOut ? 'Mengeluarkan...' : 'Keluar'}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -149,3 +228,4 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+

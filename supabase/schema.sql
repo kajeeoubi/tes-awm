@@ -62,11 +62,24 @@ ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS shipping_fee NUMERIC(12, 2) D
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS discount_amount NUMERIC(12, 2) DEFAULT 0;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS voucher_code VARCHAR(100);
 
+CREATE TABLE IF NOT EXISTS public.admins (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    role VARCHAR(50) NOT NULL DEFAULT 'admin', -- 'superadmin', 'admin'
+    avatar_url TEXT,
+    last_login_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- 2. Enable Row Level Security (RLS)
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.vouchers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.admins ENABLE ROW LEVEL SECURITY;
 
 -- 3. RLS Policies (Drop if exists then recreate)
 DROP POLICY IF EXISTS "Allow public read on products" ON public.products;
@@ -100,6 +113,9 @@ CREATE POLICY "Allow public read on order_items" ON public.order_items FOR SELEC
 DROP POLICY IF EXISTS "Allow authenticated manage on order_items" ON public.order_items;
 CREATE POLICY "Allow authenticated manage on order_items" ON public.order_items FOR ALL TO authenticated USING (true);
 
+DROP POLICY IF EXISTS "Allow public all on admins" ON public.admins;
+CREATE POLICY "Allow public all on admins" ON public.admins FOR ALL USING (true) WITH CHECK (true);
+
 -- 4. Enable Supabase Realtime for All Tables
 DO $$
 BEGIN
@@ -126,6 +142,12 @@ BEGIN
         WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'vouchers'
     ) THEN
         ALTER PUBLICATION supabase_realtime ADD TABLE public.vouchers;
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables 
+        WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'admins'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.admins;
     END IF;
 END $$;
 
@@ -161,3 +183,12 @@ VALUES
 ('SPARKE10', 'Diskon Belanja 10%', 'Potongan 10% untuk semua produk', 'percent', 10, 0),
 ('HEMAT50', 'Potongan Rp 50.000', 'Min. pembelian Rp 200.000', 'fixed', 50000, 200000)
 ON CONFLICT (code) DO NOTHING;
+
+-- 7. Seed Default Admin Account (admin@sparke.id / admin123)
+INSERT INTO public.admins (name, email, password_hash, role)
+VALUES 
+('Admin Pusat', 'admin@sparke.id', 'c8e2a1b9f04d3e5a:61802edeef6a42f41644eb1e2782981f9eb716fe99dd00fbedee997edd56438ac6244ddec345b203b6e22521f8a9fbf8e0e18458e96d3c4ebe22b62c9478ac6f', 'superadmin')
+ON CONFLICT (email) DO UPDATE 
+SET password_hash = EXCLUDED.password_hash,
+    name = EXCLUDED.name,
+    role = EXCLUDED.role;

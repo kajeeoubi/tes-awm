@@ -131,6 +131,16 @@ export default function OrderSuccessPage() {
                 <p className="font-bold text-foreground text-sm">{order.customer_whatsapp || '-'}</p>
               </div>
 
+              {/* Alamat Pengiriman */}
+              <div className="space-y-1 sm:col-span-2 pt-2 border-t border-border/40">
+                <span className="text-muted-foreground font-medium block">
+                  Alamat Lengkap Pengiriman:
+                </span>
+                <p className="font-medium text-foreground leading-relaxed">
+                  {order.customer_address || 'Alamat tidak dicantumkan'}
+                </p>
+              </div>
+
               <div className="space-y-1 sm:col-span-2 pt-2 border-t border-border/40">
                 <span className="text-muted-foreground flex items-center gap-1.5 font-medium">
                   <Clock className="h-3.5 w-3.5" /> Waktu Pemesanan
@@ -180,9 +190,24 @@ export default function OrderSuccessPage() {
             {/* Total Section */}
             <div className="space-y-2 text-xs">
               <div className="flex justify-between text-muted-foreground">
-                <span>Ongkos Kirim</span>
-                <span className="text-emerald-600 font-bold uppercase">Gratis</span>
+                <span>Subtotal Produk</span>
+                <span>{formatRupiah(order.subtotal_amount || (order.total_amount + (order.discount_amount || 0) - (order.shipping_fee || 0)))}</span>
               </div>
+
+              {(order.discount_amount && order.discount_amount > 0) || order.voucher_code ? (
+                <div className="flex justify-between text-emerald-600 font-medium">
+                  <span>Diskon Voucher {order.voucher_code ? `(${order.voucher_code})` : ''}</span>
+                  <span>-{formatRupiah(order.discount_amount || 0)}</span>
+                </div>
+              ) : null}
+
+              <div className="flex justify-between text-muted-foreground">
+                <span>Biaya Pengiriman</span>
+                <span className={order.shipping_fee === 0 ? 'text-emerald-600 font-bold uppercase' : 'font-semibold text-foreground'}>
+                  {order.shipping_fee === 0 ? 'Gratis' : formatRupiah(order.shipping_fee || 0)}
+                </span>
+              </div>
+
               <div className="flex justify-between text-base font-extrabold text-foreground pt-2 border-t border-border/60">
                 <span>Total Pembayaran</span>
                 <span className="text-xl font-extrabold text-foreground">{formatRupiah(order.total_amount)}</span>
