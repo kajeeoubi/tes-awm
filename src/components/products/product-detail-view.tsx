@@ -240,27 +240,27 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
               </div>
             </div>
 
-            {/* Buttons */}
-            <div className="flex flex-col sm:flex-row items-stretch gap-3 pt-2">
+            {/* Buttons (Side by Side on mobile & desktop) */}
+            <div className="grid grid-cols-2 gap-2.5 sm:flex sm:flex-row sm:gap-3 pt-2">
               <Button
                 type="button"
                 onClick={handleAddToCart}
                 disabled={isOutOfStock}
                 variant="outline"
-                className="h-11 sm:h-12 flex-1 rounded-full border-neutral-300 text-xs font-bold tracking-wide uppercase hover:bg-neutral-100 gap-2 cursor-pointer"
+                className="h-11 sm:h-12 flex-1 rounded-full border-neutral-300 text-[11px] sm:text-xs font-bold tracking-wider uppercase hover:bg-neutral-100 gap-1.5 sm:gap-2 px-2 cursor-pointer shadow-2xs"
               >
-                <ShoppingBag className="h-4 w-4 shrink-0" />
-                <span>{isOutOfStock ? 'Stok Habis' : 'Tambah'}</span>
+                <ShoppingBag className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span className="truncate">{isOutOfStock ? 'Stok Habis' : 'Tambah'}</span>
               </Button>
 
               <Button
                 type="button"
                 onClick={handleBuyNow}
                 disabled={isOutOfStock}
-                className="h-11 sm:h-12 flex-1 rounded-full bg-neutral-900 text-white hover:bg-neutral-800 text-xs font-bold tracking-wide uppercase shadow-xs gap-2 cursor-pointer"
+                className="h-11 sm:h-12 flex-1 rounded-full bg-neutral-900 text-white hover:bg-neutral-800 text-[11px] sm:text-xs font-bold tracking-wider uppercase shadow-xs gap-1.5 sm:gap-2 px-2 cursor-pointer"
               >
-                <CreditCard className="h-4 w-4 shrink-0" />
-                <span>{isOutOfStock ? 'Stok Habis' : 'Beli Sekarang'}</span>
+                <CreditCard className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span className="truncate">{isOutOfStock ? 'Stok Habis' : 'Beli Sekarang'}</span>
               </Button>
             </div>
           </div>
