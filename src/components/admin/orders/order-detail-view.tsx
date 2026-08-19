@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Order, OrderStatus } from '@/types/ecommerce';
 import { useOrderDetail, useUpdateOrderStatus } from '@/hooks/use-orders';
-import { formatRupiah, formatDate } from '@/lib/utils';
+import { formatRupiah, formatDate, formatRelativeDate } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -87,9 +87,9 @@ export function OrderDetailView({ order: initialOrder }: OrderDetailViewProps) {
             {renderStatusBadge(status)}
           </div>
           <div className="flex items-center gap-4 text-xs text-neutral-500 font-normal">
-            <span className="flex items-center gap-1.5">
+            <span className="flex items-center gap-1.5" title={formatDate(order.created_at)} suppressHydrationWarning>
               <Calendar className="h-3.5 w-3.5 text-neutral-400" />
-              {formatDate(order.created_at)}
+              {formatRelativeDate(order.created_at)}
             </span>
           </div>
         </div>

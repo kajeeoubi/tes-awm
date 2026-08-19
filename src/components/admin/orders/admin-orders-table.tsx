@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Order, OrderStatus } from '@/types/ecommerce';
 import { useOrders } from '@/hooks/use-orders';
-import { formatRupiah, formatDate, cn } from '@/lib/utils';
+import { formatRupiah, formatDate, formatRelativeDate, cn } from '@/lib/utils';
 import { Search, Eye, X, Filter, Check, MoreHorizontal, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
@@ -261,8 +261,8 @@ export function AdminOrdersTable({
                   <TableCell className="py-3.5">
                     {getStatusBadge(order.status)}
                   </TableCell>
-                  <TableCell className="py-3.5 text-xs text-neutral-500 whitespace-nowrap" suppressHydrationWarning>
-                    {formatDate(order.created_at)}
+                  <TableCell className="py-3.5 text-xs text-neutral-500 whitespace-nowrap" suppressHydrationWarning title={formatDate(order.created_at)}>
+                    {formatRelativeDate(order.created_at)}
                   </TableCell>
                   <TableCell className="pr-4 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>

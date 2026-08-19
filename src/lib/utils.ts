@@ -25,6 +25,34 @@ export function formatDate(dateString: string): string {
   }).format(date)
 }
 
+export function formatRelativeDate(dateString: string): string {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  if (isNaN(date.getTime())) return ''
+
+  const now = new Date()
+  const diffInMs = now.getTime() - date.getTime()
+  const diffInSeconds = Math.floor(diffInMs / 1000)
+
+  // Jika waktu baru saja (< 1 menit) atau sedikit di masa depan karena clock skew
+  if (diffInSeconds < 60) {
+    return 'Baru saja'
+  }
+
+  const diffInMinutes = Math.floor(diffInSeconds / 60)
+  if (diffInMinutes < 60) {
+    return `${diffInMinutes} menit yang lalu`
+  }
+
+  const diffInHours = Math.floor(diffInMinutes / 60)
+  if (diffInHours < 24) {
+    return `${diffInHours} jam yang lalu`
+  }
+
+  // Jika >= 24 jam, tampilkan format tanggal standar
+  return formatDate(dateString)
+}
+
 export function generateOrderNumber(): string {
   const now = new Date()
   const year = now.getFullYear()
